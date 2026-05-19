@@ -12,9 +12,11 @@ on:
       image_api:
         required: false
         type: string
+        default: ''
       image_frontend:
         required: false
         type: string
+        default: ''
       dockerfile_path:
         required: false
         type: string
@@ -51,7 +53,7 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Build e Push API
-        if: inputs.image_api != ''
+        if: ${{ inputs.image_api != '' }}
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -61,13 +63,13 @@ jobs:
           tags: ${{ inputs.image_api }}:latest
 
       - name: Build e Push Frontend
-        if: inputs.image_frontend != ''
+        if: ${{ inputs.image_frontend != '' }}
         uses: docker/build-push-action@v5
         with:
           context: ${{ inputs.frontend_context }}
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: ${{ inputs.image_frontend }}:prod
+          tags: ${{ inputs.image_frontend }}:latest
 
       - name: Deploy no servidor
         uses: appleboy/ssh-action@v1
@@ -78,4 +80,4 @@ jobs:
           script: |
             cd ${{ inputs.server_path }}
             docker compose -f docker-compose.yml -f docker-compose.prod.yml pull
-            docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --force-recreate
