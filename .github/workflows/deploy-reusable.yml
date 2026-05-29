@@ -25,6 +25,10 @@ on:
         required: false
         type: string
         default: ./SbsImoveis.Admin
+      frontend_build_args:
+        required: false
+        type: string
+        default: ''
     secrets:
       SSH_PRIVATE_KEY:
         required: true
@@ -74,6 +78,7 @@ jobs:
           platforms: linux/amd64
           push: true
           tags: ${{ inputs.image_frontend }}:latest
+          build-args: ${{ inputs.frontend_build_args }}
 
       - name: Deploy no servidor
         uses: appleboy/ssh-action@v1
