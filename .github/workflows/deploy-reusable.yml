@@ -25,10 +25,6 @@ on:
         required: false
         type: string
         default: ./SbsImoveis.Admin
-      frontend_build_args:
-        required: false
-        type: string
-        default: ''
     secrets:
       SSH_PRIVATE_KEY:
         required: true
@@ -38,6 +34,8 @@ on:
         required: true
       GHCR_TOKEN:
         required: true
+      VITE_TURNSTILE_SITE_KEY:
+        required: false
 
 jobs:
   build-and-deploy:
@@ -78,7 +76,8 @@ jobs:
           platforms: linux/amd64
           push: true
           tags: ${{ inputs.image_frontend }}:latest
-          build-args: ${{ inputs.frontend_build_args }}
+          build-args: |
+            VITE_TURNSTILE_SITE_KEY=${{ secrets.VITE_TURNSTILE_SITE_KEY }}
 
       - name: Deploy no servidor
         uses: appleboy/ssh-action@v1
