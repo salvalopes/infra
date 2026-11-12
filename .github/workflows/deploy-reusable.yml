@@ -89,12 +89,17 @@ jobs:
 
       - name: Deploy no servidor
         uses: appleboy/ssh-action@v1
+        env:
+          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
+          GHCR_USER: ${{ github.actor }}
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
+          envs: GHCR_TOKEN,GHCR_USER
           script: |
             set -euo pipefail
+            echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
             cd ${{ inputs.server_path }}
             export IMAGE_TAG=${{ github.sha }}
             COMPOSE="docker compose -f docker-compose.yml -f docker-compose.prod.yml"
