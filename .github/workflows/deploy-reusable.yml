@@ -66,7 +66,11 @@ jobs:
           file: ${{ inputs.dockerfile_path }}
           platforms: linux/amd64
           push: true
-          tags: ${{ inputs.image_api }}:latest
+          tags: |
+            ${{ inputs.image_api }}:latest
+            ${{ inputs.image_api }}:${{ github.sha }}
+          labels: |
+            org.opencontainers.image.revision=${{ github.sha }}
 
       - name: Build e Push Frontend
         if: ${{ inputs.image_frontend != '' }}
@@ -75,7 +79,11 @@ jobs:
           context: ${{ inputs.frontend_context }}
           platforms: linux/amd64
           push: true
-          tags: ${{ inputs.image_frontend }}:latest
+          tags: |
+            ${{ inputs.image_frontend }}:latest
+            ${{ inputs.image_frontend }}:${{ github.sha }}
+          labels: |
+            org.opencontainers.image.revision=${{ github.sha }}
           build-args: |
             VITE_TURNSTILE_SITE_KEY=${{ secrets.VITE_TURNSTILE_SITE_KEY }}
 
@@ -86,6 +94,13 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
+            set -euo pipefail
             cd ${{ inputs.server_path }}
-            docker compose -f docker-compose.yml -f docker-compose.prod.yml pull
-            docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --force-recreate
+            export IMAGE_TAG=${{ github.sha }}
+            COMPOSE="docker compose -f docker-compose.yml -f docker-compose.prod.yml"
+            $COMPOSE pull
+            $COMPOSE up -d --force-recreate
+            echo "--- Imagens em execução (esperado: revision=${IMAGE_TAG}) ---"
+            for id in $($COMPOSE ps -q); do
+              docker inspect "$id" --format '{{.Name}} {{.Config.Image}} revision={{index .Config.Labels "org.opencontainers.image.revision"}}'
+            done
